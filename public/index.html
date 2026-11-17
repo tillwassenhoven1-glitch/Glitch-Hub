@@ -38,6 +38,7 @@ svg{display:block}
 .spacer{flex:1}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:11px 20px;border-radius:999px;font-weight:700;font-size:15px;transition:transform .15s var(--ease),filter .2s,opacity .2s;user-select:none;white-space:nowrap}
 .btn:active{transform:scale(.96)}
+.btn svg{width:16px;height:16px}
 .btn.white{background:var(--chrome);color:#0b0b0c;box-shadow:inset 0 1px 0 #fff,0 6px 20px rgba(255,255,255,.08)}
 .btn.white:hover{filter:brightness(1.04)}
 .btn.dark{background:var(--card2);border:1px solid var(--line)}
@@ -132,6 +133,18 @@ main{flex:1;min-width:0;padding:22px 24px calc(var(--sb) + 60px)}
 @keyframes fade{from{opacity:0}}
 @keyframes pop{from{opacity:0;transform:scale(.94) translateY(16px)}}
 
+.hero{display:flex;gap:26px;align-items:center;background:linear-gradient(135deg,#1c1a12,#111113 55%);border:1px solid rgba(201,164,62,.35);border-radius:28px;padding:20px;margin-bottom:34px;cursor:pointer;transition:transform .25s var(--ease),box-shadow .25s}
+.hero:hover{transform:translateY(-3px);box-shadow:0 20px 50px rgba(201,164,62,.12)}
+.hthumb{flex:0 0 46%;aspect-ratio:16/10;border-radius:20px;background:#fff;color:#000;display:grid;place-items:center;font-weight:900;font-size:clamp(26px,4vw,46px);letter-spacing:-1px;position:relative;overflow:hidden}
+.hthumb img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.htxt{flex:1;min-width:0}
+.hnew{display:inline-block;font-size:clamp(20px,2.6vw,30px);font-weight:900;letter-spacing:2px;background:linear-gradient(90deg,var(--gold2),var(--gold));-webkit-background-clip:text;background-clip:text;color:transparent}
+.htxt h2{font-size:clamp(30px,4vw,46px);font-weight:900;letter-spacing:-1px;margin:2px 0 8px}
+.htxt p{color:var(--mut);font-size:15px;line-height:1.5;margin-bottom:18px;max-width:520px}
+.hbtns{display:flex;align-items:center;gap:14px}
+.hrate{display:flex;align-items:center;gap:6px;color:var(--mut);font-weight:700}
+.hrate svg{width:18px;height:18px}
+
 /* ---------- Handy / Tablet ---------- */
 @media (max-width:860px){
   .side{display:none}
@@ -151,6 +164,9 @@ main{flex:1;min-width:0;padding:22px 24px calc(var(--sb) + 60px)}
   .chip.on{background:var(--txt);color:#000;border-color:var(--txt)}
   .grid{grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:12px}
   .thumb{font-size:17px}
+  .hero{flex-direction:column;align-items:stretch;gap:14px;padding:12px;border-radius:24px}
+  .hthumb{flex:none}
+  .htxt{padding:0 6px 6px}
   .ov{align-items:flex-end;padding:0}
   .sheet{border-radius:30px 30px 0 0;max-height:92vh;padding-bottom:calc(var(--sb) + 22px)}
   .version{display:none}
@@ -240,7 +256,7 @@ const GAMES = [
    desc:"Das Idle-Klickspiel: Gebäude, Upgrades, Goldkekse, Prestige, Drache und Minispiele."},
   {id:"auktionlive", name:"AuktionLive", repo:"AuktionLive", cats:["casino"], neu:true,
    desc:"Live-Auktionen mit Fake-Geld: Biete mit, handle clever – die Auktionen laufen sogar weiter, wenn der Tab zu ist."},
-  {id:"ggamble", name:"GGamble", repo:"GGamble", cats:["casino"], neu:true,
+  {id:"ggamble", name:"GGamble", repo:"GGamble", cats:["casino"], neu:true, hero:true,
    desc:"Casino-Spaß mit Spielgeld: Slots, Wetten, Börse, Aufgaben und Ränge – mit eigenem Konto."},
 ];
 
@@ -310,7 +326,7 @@ function thumb(g, big){
   const img = big ? (g.pics && g.pics[S.pic]) || g.img : g.img;
   return `<div class="thumb${big?" big":""}">${img?`<img src="${esc(img)}" alt="">`:esc(g.name)}
     ${!big && g.neu ? '<span class="badge">NEU</span>' : ""}
-    ${!big && g.mp ? '<span class="badge mp">ONLINE</span>' : ""}</div>`;
+</div>`;
 }
 function card(g){
   const c = cnt(g.id);
@@ -327,6 +343,23 @@ function list(cat){
   return l;
 }
 function grid(l){ return l.length ? `<div class="grid">${l.map(card).join("")}</div>` : `<div class="empty">Kein Spiel gefunden 😕</div>`; }
+
+/* ---------- Highlight oben ---------- */
+function hero(){
+  const g = GAMES.find(x=>x.hero); if(!g) return "";
+  const c = cnt(g.id);
+  return `<section class="hero" onclick="openGame('${g.id}')">
+    <div class="hthumb">${g.img?`<img src="${esc(g.img)}" alt="">`:esc(g.name)}</div>
+    <div class="htxt">
+      <span class="hnew">NEU</span>
+      <h2>${esc(g.name)}</h2>
+      <p>${esc(g.desc)}</p>
+      <div class="hbtns">
+        <a class="btn white" href="${BASE + g.repo}/" target="_blank" rel="noopener" onclick="event.stopPropagation()">${ico("play")}Jetzt spielen</a>
+        <span class="hrate num">${ico("up",2.2)}${S.api ? c.up : "–"}</span>
+      </div>
+    </div></section>`;
+}
 
 /* ---------- Rendern ---------- */
 function renderNav(){
@@ -345,7 +378,7 @@ function render(){
     h = `<section class="sec"><div class="sech"><h2>Suche: „${esc(S.q)}“</h2><small>${l.length} Spiele</small></div>${grid(l)}</section>`;
   } else if(S.cat==="home"){
     const pop = list("beliebt").slice(0, 5);
-    h = `<section class="sec"><div class="sech"><h2>Beliebt</h2><small>die meisten Likes</small></div>${grid(pop)}</section>
+    h = hero() + `<section class="sec"><div class="sech"><h2>Beliebt</h2><small>die meisten Likes</small></div>${grid(pop)}</section>
          <section class="sec"><div class="sech"><h2>Alle Spiele</h2><small>${GAMES.length} Spiele</small></div>${grid(GAMES)}</section>`;
   } else {
     const l = list(S.cat);
@@ -376,7 +409,7 @@ function renderGame(){
   $("gameSheet").innerHTML = `
     <button class="x" onclick="closeGame()">${ico("x",2.6)}</button>
     ${thumb(g, true)}${pics}
-    <div class="mt"><h3>${esc(g.name)}</h3>${g.mp?'<span class="ver">Online</span>':""}</div>
+    <div class="mt"><h3>${esc(g.name)}</h3>${g.neu?'<span class="ver">NEU</span>':""}</div>
     <p class="desc">${esc(g.desc)}</p>
     <div class="tags">${g.cats.map(k=>`<span class="tag">${CAT_NAME[k]}</span>`).join("")}${g.mp?'<span class="tag">Multiplayer</span>':""}</div>
     <div class="votes">
