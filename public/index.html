@@ -133,11 +133,16 @@ main{flex:1;min-width:0;padding:22px 24px calc(var(--sb) + 60px)}
 @keyframes fade{from{opacity:0}}
 @keyframes pop{from{opacity:0;transform:scale(.94) translateY(16px)}}
 
-.hero{display:flex;gap:26px;align-items:center;background:linear-gradient(135deg,#1c1a12,#111113 55%);border:1px solid rgba(201,164,62,.35);border-radius:28px;padding:20px;margin-bottom:34px;cursor:pointer;transition:transform .25s var(--ease),box-shadow .25s}
+.heros{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:18px;margin-bottom:34px}
+.hero{display:flex;flex-direction:column;gap:16px;background:linear-gradient(135deg,#1c1a12,#111113 55%);border:1px solid rgba(201,164,62,.35);border-radius:28px;padding:16px;cursor:pointer;transition:transform .25s var(--ease),box-shadow .25s}
 .hero:hover{transform:translateY(-3px);box-shadow:0 20px 50px rgba(201,164,62,.12)}
-.hthumb{flex:0 0 46%;aspect-ratio:16/10;border-radius:20px;background:#fff;color:#000;display:grid;place-items:center;font-weight:900;font-size:clamp(26px,4vw,46px);letter-spacing:-1px;position:relative;overflow:hidden}
+.hthumb{aspect-ratio:16/10;border-radius:20px;background:#fff;color:#000;display:grid;place-items:center;font-weight:900;font-size:clamp(26px,4vw,46px);letter-spacing:-1px;position:relative;overflow:hidden}
 .hthumb img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-.htxt{flex:1;min-width:0}
+.htxt{flex:1;min-width:0;padding:0 6px 6px;display:flex;flex-direction:column}
+.htxt p{flex:1}
+.hero.hot{background:linear-gradient(135deg,#221310,#111113 55%);border-color:rgba(232,82,74,.4)}
+.hero.hot:hover{box-shadow:0 20px 50px rgba(232,82,74,.14)}
+.hero.hot .hnew{background:linear-gradient(90deg,#ff8a4c,var(--red));-webkit-background-clip:text;background-clip:text}
 .hnew{display:inline-block;font-size:clamp(20px,2.6vw,30px);font-weight:900;letter-spacing:2px;background:linear-gradient(90deg,var(--gold2),var(--gold));-webkit-background-clip:text;background-clip:text;color:transparent}
 .htxt h2{font-size:clamp(30px,4vw,46px);font-weight:900;letter-spacing:-1px;margin:2px 0 8px}
 .htxt p{color:var(--mut);font-size:15px;line-height:1.5;margin-bottom:18px;max-width:520px}
@@ -164,9 +169,8 @@ main{flex:1;min-width:0;padding:22px 24px calc(var(--sb) + 60px)}
   .chip.on{background:var(--txt);color:#000;border-color:var(--txt)}
   .grid{grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:12px}
   .thumb{font-size:17px}
-  .hero{flex-direction:column;align-items:stretch;gap:14px;padding:12px;border-radius:24px}
-  .hthumb{flex:none}
-  .htxt{padding:0 6px 6px}
+  .heros{grid-template-columns:1fr;gap:14px}
+  .hero{gap:14px;padding:12px;border-radius:24px}
   .ov{align-items:flex-end;padding:0}
   .sheet{border-radius:30px 30px 0 0;max-height:92vh;padding-bottom:calc(var(--sb) + 22px)}
   .version{display:none}
@@ -230,7 +234,7 @@ main{flex:1;min-width:0;padding:22px 24px calc(var(--sb) + 60px)}
    ========================================================= */
 const BASE = "https://tillwassenhoven1-glitch.github.io/";
 const GAMES = [
-  {id:"neon-bay", name:"Neon Bay 3D", repo:"Neon-Bay", cats:["auto","action"], mp:true, top:true,
+  {id:"neon-bay", name:"Neon Bay 3D", repo:"Neon-Bay", cats:["auto","action"], mp:true, top:true, hero:"BELIEBT",
    desc:"GTA-artige 3D-Open-World: Fahr durch die Stadt, erledige Missionen und spiel online mit Freunden. Mit eigenem Radiosender „Tills Radio“."},
   {id:"polytrack", name:"Poly Rush 3D", repo:"PolyTrack", cats:["auto"], mp:true, top:true,
    desc:"Low-Poly-Rennspiel auf Zeit: Loopings, Wandfahrten, Geister, Bestenlisten und ein eigener Strecken-Editor. Online-Rennen gegen Freunde."},
@@ -256,7 +260,7 @@ const GAMES = [
    desc:"Das Idle-Klickspiel: Gebäude, Upgrades, Goldkekse, Prestige, Drache und Minispiele."},
   {id:"auktionlive", name:"AuktionLive", repo:"AuktionLive", cats:["casino"], neu:true,
    desc:"Live-Auktionen mit Fake-Geld: Biete mit, handle clever – die Auktionen laufen sogar weiter, wenn der Tab zu ist."},
-  {id:"ggamble", name:"GGamble", repo:"GGamble", cats:["casino"], neu:true, hero:true,
+  {id:"ggamble", name:"GGamble", repo:"GGamble", cats:["casino"], neu:true, hero:"NEU",
    desc:"Casino-Spaß mit Spielgeld: Slots, Wetten, Börse, Aufgaben und Ränge – mit eigenem Konto."},
 ];
 
@@ -346,19 +350,21 @@ function grid(l){ return l.length ? `<div class="grid">${l.map(card).join("")}</
 
 /* ---------- Highlight oben ---------- */
 function hero(){
-  const g = GAMES.find(x=>x.hero); if(!g) return "";
-  const c = cnt(g.id);
-  return `<section class="hero" onclick="openGame('${g.id}')">
+  const hs = GAMES.filter(x=>x.hero).sort((a,b)=>(a.hero==="NEU"?0:1)-(b.hero==="NEU"?0:1));
+  if(!hs.length) return "";
+  return `<div class="heros">${hs.map(g=>{
+    const c = cnt(g.id), hot = g.hero!=="NEU";
+    return `<section class="hero${hot?" hot":""}" onclick="openGame('${g.id}')">
     <div class="hthumb">${g.img?`<img src="${esc(g.img)}" alt="">`:esc(g.name)}</div>
     <div class="htxt">
-      <span class="hnew">NEU</span>
+      <span class="hnew">${hot?"🔥 ":""}${g.hero}</span>
       <h2>${esc(g.name)}</h2>
       <p>${esc(g.desc)}</p>
       <div class="hbtns">
         <a class="btn white" href="${BASE + g.repo}/" target="_blank" rel="noopener" onclick="event.stopPropagation()">${ico("play")}Jetzt spielen</a>
         <span class="hrate num">${ico("up",2.2)}${S.api ? c.up : "–"}</span>
       </div>
-    </div></section>`;
+    </div></section>`;}).join("")}</div>`;
 }
 
 /* ---------- Rendern ---------- */
