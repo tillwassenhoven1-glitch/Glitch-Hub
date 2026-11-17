@@ -33,7 +33,7 @@ Kein Durchklicken durch GitHub-Links mehr: Thumbnail anklicken, Beschreibung les
 | Steal an Egg | Action |
 | Case Rush | Casino & Sim |
 | Cookie Clicker | Casino & Sim |
-| AuktionLive | Casino & Sim |
+| AktienLive | Casino & Sim |
 | GGamble | Casino & Sim |
 
 ## 🛠️ Technik
