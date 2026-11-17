@@ -112,6 +112,9 @@ main{flex:1;min-width:0;padding:22px 24px calc(var(--sb) + 60px)}
 .bart{display:flex;justify-content:space-between;font-size:12px;color:var(--mut);margin:6px 4px 0;font-weight:600}
 .play{width:100%;margin-top:18px;padding:17px;font-size:17px}
 .play svg{width:18px;height:18px}
+.newtab{display:flex;align-items:center;justify-content:center;gap:7px;margin-top:12px;color:var(--mut);font-size:13.5px;font-weight:600}
+.newtab:hover{color:var(--txt)}
+.newtab svg{width:14px;height:14px}
 
 /* ---------- Login ---------- */
 .auth{max-width:400px}
@@ -150,6 +153,28 @@ main{flex:1;min-width:0;padding:22px 24px calc(var(--sb) + 60px)}
 .hrate{display:flex;align-items:center;gap:6px;color:var(--mut);font-weight:700}
 .hrate svg{width:18px;height:18px}
 
+/* ---------- Spieler (Spiel direkt auf der Seite) ---------- */
+.player{position:fixed;inset:0;z-index:70;background:#000;display:none;flex-direction:column}
+.player.on{display:flex;animation:fade .2s var(--ease)}
+.pbar{display:flex;align-items:center;gap:10px;padding:calc(var(--st) + 8px) 12px 8px;background:var(--card);border-bottom:1px solid var(--line);flex-shrink:0}
+.pbar .ib{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:var(--card2);border:1px solid var(--line);flex-shrink:0;transition:background .15s}
+.pbar .ib:hover{background:var(--card3)}
+.pbar .ib svg{width:18px;height:18px}
+.ptitle{display:flex;align-items:center;gap:10px;min-width:0;flex:1}
+.ptitle img,.ptitle .pt{width:56px;height:35px;border-radius:8px;object-fit:cover;background:#fff;flex-shrink:0}
+.ptitle b{font-size:16px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pv{display:flex;gap:6px}
+.pv button{display:flex;align-items:center;gap:6px;height:40px;padding:0 13px;border-radius:12px;background:var(--card2);border:1px solid var(--line);font-weight:800;font-size:14px;transition:background .15s,color .15s,border-color .15s}
+.pv button svg{width:17px;height:17px}
+.pv .up.on{background:rgba(76,194,101,.14);border-color:rgba(76,194,101,.55);color:var(--green)}
+.pv .down.on{background:rgba(232,82,74,.14);border-color:rgba(232,82,74,.55);color:var(--red)}
+.pwrap{position:relative;flex:1;background:#000}
+.pwrap iframe{position:absolute;inset:0;width:100%;height:100%;border:0;background:#000}
+.ploader{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none;transition:opacity .4s}
+.ploader.off{opacity:0}
+.spin{width:38px;height:38px;border-radius:50%;border:3px solid var(--line2);border-top-color:var(--txt);animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
 /* ---------- Handy / Tablet ---------- */
 @media (max-width:860px){
   .side{display:none}
@@ -174,6 +199,12 @@ main{flex:1;min-width:0;padding:22px 24px calc(var(--sb) + 60px)}
   .hthumb{flex-basis:42%}
   .htxt p{display:none}
   .ov{align-items:flex-end;padding:0}
+  .pbar{gap:6px;padding-left:8px;padding-right:8px}
+  .ptitle img,.ptitle .pt{display:none}
+  .ptitle b{font-size:14px}
+  .pv button{padding:0 9px;height:38px}
+  .pbar .ib{width:38px;height:38px}
+  .pbar .tab{display:none}
   .sheet{border-radius:30px 30px 0 0;max-height:92vh;padding-bottom:calc(var(--sb) + 22px)}
   .version{display:none}
 }
@@ -208,7 +239,7 @@ main{flex:1;min-width:0;padding:22px 24px calc(var(--sb) + 60px)}
 </div>
 
 <!-- Login-Fenster -->
-<div class="ov" id="authOv" onclick="if(event.target===this)closeAuth()">
+<div class="ov" id="authOv" style="z-index:85" onclick="if(event.target===this)closeAuth()">
   <div class="sheet auth">
     <button class="x" onclick="closeAuth()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
     <h3 id="authTitle">Anmelden</h3>
@@ -223,6 +254,20 @@ main{flex:1;min-width:0;padding:22px 24px calc(var(--sb) + 60px)}
       <div class="err" id="aErr"></div>
       <button class="btn white" id="aBtn" type="submit">Anmelden</button>
     </form>
+  </div>
+</div>
+
+<!-- Spieler -->
+<div class="player" id="player">
+  <div class="pbar">
+    <button class="ib" onclick="closePlayer()" title="Zurück"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+    <div class="ptitle" id="ptitle"></div>
+    <div class="pv" id="pvotes"></div>
+    <a class="ib tab" id="ptab" target="_blank" rel="noopener" title="In neuem Tab öffnen"></a>
+    <button class="ib" onclick="fullscreen()" title="Vollbild"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+  </div>
+  <div class="pwrap" id="pwrap">
+    <div class="ploader" id="ploader"><div class="spin"></div></div>
   </div>
 </div>
 
@@ -324,7 +369,7 @@ async function loadVotes(){
     if(Array.isArray(d.recent) && d.recent.length){ mergeRecent(d.recent); }
     if(S.token && !d.user){ logout(true); }
   }catch(e){ S.api = false; }
-  render(); if(S.open) renderGame();
+  render(); if(S.open) renderGame(); renderPlayerVotes();
 }
 
 /* ---------- Zuletzt gespielt ---------- */
@@ -374,7 +419,7 @@ function hero(){
       <h2>${esc(g.name)}</h2>
       <p>${esc(g.desc)}</p>
       <div class="hbtns">
-        <a class="btn white" href="${BASE + g.repo}/" target="_blank" rel="noopener" onclick="event.stopPropagation();played('${g.id}')">${ico("play")}Jetzt spielen</a>
+        <button class="btn white" onclick="event.stopPropagation();play('${g.id}')">${ico("play")}Jetzt spielen</button>
         <span class="hrate num">${ico("up",2.2)}${S.api ? c.up : "–"}</span>
       </div>
     </div></section>`;}).join("")}</div>`;
@@ -437,10 +482,12 @@ function renderGame(){
       <button class="vote down${m===-1?" on":""}" onclick="vote(-1)">${ico("down")}<span class="num">${S.api?c.down:"–"}</span></button>
     </div>
     ${tot ? `<div class="bar"><i style="width:${pct}%"></i></div><div class="bart"><span>${pct}% mögen das Spiel</span><span>${tot} Bewertungen</span></div>` : ""}
-    <a class="btn white play" href="${BASE + g.repo}/" target="_blank" rel="noopener" onclick="played('${g.id}')">${ico("play")}Spielen</a>`;
+    <button class="btn white play" onclick="play('${g.id}')">${ico("play")}Spielen</button>
+    <a class="newtab" href="${BASE + g.repo}/" target="_blank" rel="noopener" onclick="played('${g.id}')">${ico("ext")}In neuem Tab öffnen</a>`;
 }
-async function vote(v){
-  const g = S.open;
+function vote(v){ return voteFor(S.open.id, v); }
+async function voteFor(id, v){
+  const g = GAMES.find(x=>x.id===id);
   if(!S.api) return toast("Likes funktionieren nur auf der echten Seite");
   if(!S.token) return openAuth("Melde dich an, um Spiele zu bewerten");
   const old = S.mine[g.id] || 0, nv = old === v ? 0 : v;
@@ -448,7 +495,7 @@ async function vote(v){
   const c = {...cnt(g.id)};
   if(old===1) c.up--; if(old===-1) c.down--;
   if(nv===1) c.up++; if(nv===-1) c.down++;
-  S.counts[g.id] = c; S.mine[g.id] = nv; renderGame(); render();
+  S.counts[g.id] = c; S.mine[g.id] = nv; renderGame(); renderPlayerVotes(); render();
   try{
     const d = await api("vote", {game:g.id, v:nv});
     S.counts[g.id] = d.counts; S.mine[g.id] = d.mine;
@@ -458,8 +505,60 @@ async function vote(v){
     else toast("Hat nicht geklappt – versuch's nochmal");
     loadVotes(); return;
   }
-  if(S.open) renderGame(); render();
+  if(S.open) renderGame(); renderPlayerVotes(); render();
 }
+
+/* ---------- Spieler ---------- */
+let playing = null;
+function play(id){
+  if(location.hash !== "#spiel-" + id) location.hash = "spiel-" + id; else openPlayer(id);
+}
+function openPlayer(id){
+  const g = GAMES.find(x=>x.id===id); if(!g) return;
+  if(S.open) { $("gameOv").classList.remove("on"); S.open = null; }
+  closeAuth();
+  if(playing !== id){
+    playing = id; played(id);
+    const w = $("pwrap"); w.querySelectorAll("iframe").forEach(f=>f.remove());
+    $("ploader").classList.remove("off");
+    const f = document.createElement("iframe");
+    f.src = BASE + g.repo + "/";
+    f.allow = "fullscreen; autoplay; gamepad; clipboard-write; screen-wake-lock; pointer-lock";
+    f.setAttribute("allowfullscreen", "");
+    f.onload = () => { $("ploader").classList.add("off"); try{ f.focus(); }catch(e){} };
+    w.appendChild(f);
+  }
+  $("ptitle").innerHTML = `${g.img?`<img src="${esc(g.img)}" alt="">`:'<span class="pt"></span>'}<b>${esc(g.name)}</b>`;
+  $("ptab").href = BASE + g.repo + "/"; $("ptab").innerHTML = ico("ext");
+  renderPlayerVotes();
+  $("player").classList.add("on"); document.body.style.overflow = "hidden";
+  document.title = g.name + " – Glitch-Hub";
+}
+function renderPlayerVotes(){
+  if(!playing) return;
+  const c = cnt(playing), m = S.mine[playing] || 0;
+  $("pvotes").innerHTML = `<button class="up${m===1?" on":""}" onclick="voteFor('${playing}',1)">${ico("up")}<span class="num">${S.api?c.up:"–"}</span></button>
+    <button class="down${m===-1?" on":""}" onclick="voteFor('${playing}',-1)">${ico("down")}<span class="num">${S.api?c.down:"–"}</span></button>`;
+}
+function closePlayer(){
+  if(location.hash.startsWith("#spiel-")) history.back(); else hidePlayer();
+}
+function hidePlayer(){
+  $("player").classList.remove("on"); document.body.style.overflow = "";
+  $("pwrap").querySelectorAll("iframe").forEach(f=>f.remove());
+  playing = null; document.title = "Glitch-Hub";
+  if(document.fullscreenElement) document.exitFullscreen().catch(()=>{});
+}
+function fullscreen(){
+  const el = $("pwrap");
+  if(document.fullscreenElement) return document.exitFullscreen().catch(()=>{});
+  (el.requestFullscreen || el.webkitRequestFullscreen || (()=>Promise.reject())).call(el)?.catch?.(()=>toast("Vollbild geht hier nicht"));
+}
+function route(){
+  const m = location.hash.match(/^#spiel-(.+)$/);
+  if(m && GAMES.some(g=>g.id===m[1])) openPlayer(m[1]); else if(playing) hidePlayer();
+}
+addEventListener("hashchange", route);
 
 /* ---------- Konto ---------- */
 let mode = "login";
@@ -502,6 +601,7 @@ document.addEventListener("keydown", e => { if(e.key==="Escape"){ closeGame(); c
 
 render();
 loadVotes();
+route();
 </script>
 </body>
 </html>
