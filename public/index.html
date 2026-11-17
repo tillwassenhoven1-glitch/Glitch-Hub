@@ -301,8 +301,9 @@ const CAT_NAME = Object.fromEntries(CATS.filter(c=>c.id).map(c=>[c.id,c.name]));
 /* ---------- Zustand ---------- */
 const S = {
   cat:"home", q:"", counts:{}, mine:{}, api:true, open:null, pic:0,
-  token: ls("gh_token"), name: ls("gh_name"),
+  token: ls("gh_token"), name: ls("gh_name"), recent: readRecent(),
 };
+function readRecent(){ try{ const r = JSON.parse(localStorage.getItem("gh_recent")||"[]"); return Array.isArray(r) ? r : []; }catch(e){ return []; } }
 function ls(k,v){try{ if(v===undefined) return localStorage.getItem(k); if(v===null) localStorage.removeItem(k); else localStorage.setItem(k,v);}catch(e){return null}}
 const esc = s => String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const $ = id => document.getElementById(id);
@@ -320,9 +321,19 @@ async function loadVotes(){
   try{
     const d = await api("votes");
     S.counts = d.counts || {}; S.mine = d.mine || {}; S.api = true;
+    if(Array.isArray(d.recent) && d.recent.length){ mergeRecent(d.recent); }
     if(S.token && !d.user){ logout(true); }
   }catch(e){ S.api = false; }
   render(); if(S.open) renderGame();
+}
+
+/* ---------- Zuletzt gespielt ---------- */
+function saveRecent(){ S.recent = S.recent.filter(id=>GAMES.some(g=>g.id===id)).slice(0, 10); ls("gh_recent", JSON.stringify(S.recent)); }
+function mergeRecent(server){ S.recent = [...S.recent, ...server.filter(id=>!S.recent.includes(id))]; saveRecent(); }
+function played(id){
+  S.recent = [id, ...S.recent.filter(x=>x!==id)]; saveRecent();
+  if(S.token && S.api) api("played", {game:id}).catch(()=>{});
+  setTimeout(render, 300);
 }
 
 /* ---------- Helfer ---------- */
@@ -363,7 +374,7 @@ function hero(){
       <h2>${esc(g.name)}</h2>
       <p>${esc(g.desc)}</p>
       <div class="hbtns">
-        <a class="btn white" href="${BASE + g.repo}/" target="_blank" rel="noopener" onclick="event.stopPropagation()">${ico("play")}Jetzt spielen</a>
+        <a class="btn white" href="${BASE + g.repo}/" target="_blank" rel="noopener" onclick="event.stopPropagation();played('${g.id}')">${ico("play")}Jetzt spielen</a>
         <span class="hrate num">${ico("up",2.2)}${S.api ? c.up : "–"}</span>
       </div>
     </div></section>`;}).join("")}</div>`;
@@ -387,6 +398,7 @@ function render(){
   } else if(S.cat==="home"){
     const pop = list("beliebt").slice(0, 5);
     h = hero() + `<section class="sec"><div class="sech"><h2>Beliebt</h2><small>die meisten Likes</small></div>${grid(pop)}</section>
+         ${S.recent.length ? `<section class="sec"><div class="sech"><h2>Zuletzt gespielt</h2><small>deine letzten Spiele</small></div>${grid(S.recent.slice(0,5).map(id=>GAMES.find(g=>g.id===id)).filter(Boolean))}</section>` : ""}
          <section class="sec"><div class="sech"><h2>Alle Spiele</h2><small>${GAMES.length} Spiele</small></div>${grid(GAMES)}</section>`;
   } else {
     const l = list(S.cat);
@@ -425,7 +437,7 @@ function renderGame(){
       <button class="vote down${m===-1?" on":""}" onclick="vote(-1)">${ico("down")}<span class="num">${S.api?c.down:"–"}</span></button>
     </div>
     ${tot ? `<div class="bar"><i style="width:${pct}%"></i></div><div class="bart"><span>${pct}% mögen das Spiel</span><span>${tot} Bewertungen</span></div>` : ""}
-    <a class="btn white play" href="${BASE + g.repo}/" target="_blank" rel="noopener">${ico("play")}Spielen</a>`;
+    <a class="btn white play" href="${BASE + g.repo}/" target="_blank" rel="noopener" onclick="played('${g.id}')">${ico("play")}Spielen</a>`;
 }
 async function vote(v){
   const g = S.open;

@@ -57,7 +57,8 @@ export default async (req) => {
         out[id] = counts(all[i]);
         if (s && all[i] && all[i][s.user]) mine[id] = all[i][s.user];
       });
-      return json({ counts: out, mine, user: s ? s.name : null });
+      const recent = s ? (await store.get(`recent/${s.user}`, { type: "json" })) || [] : [];
+      return json({ counts: out, mine, recent, user: s ? s.name : null });
     }
 
     // Registrieren
@@ -98,6 +99,18 @@ export default async (req) => {
       if (v === 0) delete votes[s.user]; else votes[s.user] = v;
       await store.setJSON(`votes/${game}`, votes);
       return json({ counts: counts(votes), mine: votes[s.user] || 0 });
+    }
+
+    // Zuletzt gespielt merken
+    if (path === "played" && req.method === "POST") {
+      const s = await session(store, req);
+      if (!s) return json({ error: "Bitte anmelden" }, 401);
+      const game = String(body.game || "");
+      if (!GAMES.has(game)) return json({ error: "Ungültig" }, 400);
+      const old = (await store.get(`recent/${s.user}`, { type: "json" })) || [];
+      const recent = [game, ...old.filter((g) => g !== game)].slice(0, 10);
+      await store.setJSON(`recent/${s.user}`, recent);
+      return json({ recent });
     }
 
     return json({ error: "Nicht gefunden" }, 404);
